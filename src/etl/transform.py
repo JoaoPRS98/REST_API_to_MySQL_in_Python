@@ -24,25 +24,31 @@ def transform_data():
   data = json_data["data"]["products"]
 
   books_df = pd.DataFrame(data)
-  
-  books = books_df.rename(columns={"asin": "product_id"}) #renaming column asin to product_id
-  
+
+  #renaming column asin to product_id
+  books = books_df.rename(columns={"asin": "product_id"}) 
+
+  #price cleaning and conversion
   books["product_price"] = (books["product_price"]
                           .str.replace("$", "", regex=False) #removing $ sign
                           .str.replace(",", ".", regex=False) #replacing , with . if exist
                           .astype(float)) #converting to float
-  
+
+  #price cleaning and conversion
   books["product_original_price"] = (books["product_original_price"] #same this for original price
                                     .str.replace("$", "", regex=False)
                                     .str.replace(",", ".", regex=False)
                                     .astype(float))
+  #creating discount percentage column
+  books["discount_percentage"] = round((books["product_original_price"] - books["product_price"]) / books["product_original_price"] * 100, 2) 
+
+  #removing 'by ' from product_byline column
+  books["product_byline"] = (books["product_byline"]
+                           .str.replace("by ", "", regex=False)) 
   
-books["discount_percentage"] = round((books["product_original_price"] - books["product_price"]) / books["product_original_price"] * 100, 2) #creating discount percentage column
+  #dropping book_formats column (duplicate info)
+  books = books.drop(columns=["book_formats"]) 
 
-books["product_byline"] = (books["product_byline"]
-                           .str.replace("by ", "", regex=False)) #removing 'by ' from product_byline column
-
-books = books.drop(columns=["book_formats"]) #dropping book_formats column (duplicate info)
-
-books["product_byline_links"] = books["product_byline_links"].apply(lambda x: x[0]["link"] if isinstance(x, list) and len(x) > 0 else None) #extracting only the  byline link from product_byline_links list
-books.head()
+  #extracting only the  byline link from product_byline_links list
+  books["product_byline_links"] = books["product_byline_links"].apply(lambda x: x[0]["link"] if isinstance(x, list) and len(x) > 0 else None) 
+  books.head()
